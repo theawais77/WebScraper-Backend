@@ -13,10 +13,14 @@ export const scrapeListings = async ({ browser, retryCount }) => {
     const page = await browser.newPage();
 
     try {
-      await page.goto("https://www.airbnb.com/", { waitUntil: "networkidle" });
+      // Increase timeout and change wait strategy
+      await page.goto("https://www.airbnb.com/", { 
+        waitUntil: "domcontentloaded", 
+        timeout: 60000 
+      });
 
       // Wait for card containers to load
-      await page.waitForSelector('[data-testid="card-container"]', { timeout: 15000 });
+      await page.waitForSelector('[data-testid="card-container"]', { timeout: 30000 });
 
       const listingCards = page.locator('[data-testid="card-container"]');
       const count = await listingCards.count();
