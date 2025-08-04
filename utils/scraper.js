@@ -13,48 +13,30 @@ export const scrapeListings = async ({ browser, retryCount }) => {
     const page = await browser.newPage();
 
     try {
-      // Add debugging to see what's actually on the page
-      await page.goto("https://www.airbnb.com/", { waitUntil: "load" });
+      await page.goto("https://www.airbnb.com/", { waitUntil: "networkidle" });
 
-      // Take a screenshot to see what loaded
-      await page.screenshot({ path: 'debug.png' });
+      // Wait for card containers to load
+      await page.waitForSelector('[data-testid="card-container"]', { timeout: 15000 });
 
-      // Log the page content to see available selectors
-      const content = await page.content();
-      console.log('Page loaded, checking for listing containers...');
-
-      // Try multiple possible selectors
-      const possibleSelectors = [
-        '[data-testid="listing-card"]',
-        '[data-testid="card-container"]', 
-        '[role="group"]',
-        '.c4mnd7m',
-        '.g1qv1ctd',
-        '[itemprop="itemListElement"]'
-      ];
-
-      for (const selector of possibleSelectors) {
-        const count = await page.locator(selector).count();
-        console.log(`${selector}: ${count} elements found`);
-      }
-
-      // Wait for listings to load (try multiple selectors)
-      await page.waitForFunction(() => {
-        return document.querySelectorAll('[data-testid*="listing"], [role="group"], .c4mnd7m').length > 0;
-      }, { timeout: 15000 });
-
-      const listings = await page.locator('[data-testid*="listing"], [role="group"]').first().waitFor();
-      const listingCards = page.locator('[data-testid*="listing"], [role="group"]');
+      const listingCards = page.locator('[data-testid="card-container"]');
       const count = await listingCards.count();
       console.log(`Found ${count} listing cards`);
 
       const listingsData = [];
       for (let i = 0; i < Math.min(count, 10); i++) {
         const card = listingCards.nth(i);
-        const title = await card.locator('h3, h4, [data-testid="title"]').innerText().catch(() => "No title found");
-        const price = await card.locator('[data-testid="price"]').innerText().catch(() => "No price found");
-        const link = await card.getAttribute('href') || "No link found";
-        console.log(`Listing ${i + 1}: Title: ${title}, Price: ${price}, Link: ${link}`);
+        
+        // Extract title (property name)
+        const title = await card.locator('div[data-testid="listing-card-title"]').textContent().catch(() => 
+          card.locator('h3, h2, [role="heading"]').first().textContent().catch(() => "N/A")
+        );
+        
+        // Extract price
+        const price = await card.locator('span:has-text("$")').first().textContent().catch(() => "N/A");
+        
+        // Extract link
+        const link = await card.locator('a').first().getAttribute('href').catch(() => "N/A");
+        
         listingsData.push({ title, price, link });
       }
 
