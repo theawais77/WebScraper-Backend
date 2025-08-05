@@ -2,7 +2,7 @@ import express from 'express';
 import { chromium } from 'playwright';
 import cors from 'cors';
 import { scrapeListings } from './utils/scraper.js';
-require('dotenv').config();
+import 'dotenv/config'; // ES module-friendly import
 
 
 const app = express();
