@@ -2,7 +2,7 @@ import express from 'express';
 import { chromium } from 'playwright';
 import cors from 'cors';
 import { scrapeListings } from './utils/scraper.js';
-import 'dotenv/config'; // ES module-friendly import
+import 'dotenv/config'; 
 
 
 const app = express();
@@ -15,9 +15,9 @@ app.get('/api/scrape', async (req, res) => {
   const { url = 'https://www.airbnb.com/', maxListings = 10 } = req.query;
   let browser;
   try {
-    browser = await chromium.launch({ headless: true });
+    browser = await chromium.launch({ headless: false });
     const context = await browser.newContext({
-      userAgent: 'Mozilla/5.0 ...', // Randomize user agent
+      userAgent: 'Mozilla/5.0 ...', 
     });
     
     const listings = await scrapeListings({ browser: context, url, maxListings });
